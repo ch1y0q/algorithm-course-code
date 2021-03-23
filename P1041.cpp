@@ -1,14 +1,13 @@
 #include <algorithm>
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 #include <string>
 #define INF 1e7
 
 using namespace std;
 
 int n, m, nm;
-int arr1[2005], arr2[2005];
-
+int arr1[1005], arr2[1005];
 
 int findKth(int l1, int l2, int k) {
     if (l1 >= n) return arr2[l2 + k - 1];  // arr1 empty
@@ -29,8 +28,7 @@ void solve()  // [l,r]
 {
     int mid1 = (nm + 1) / 2;
     int mid2 = (nm + 2) / 2;
-    cout << fixed << setprecision(5)
-         << (double)(findKth(1, 1, mid1) + findKth(1, 1, mid2)) / 2.0 << endl;
+    cout << (findKth(0, 0, mid1) + findKth(0, 0, mid2)) / 2.0 << endl;
 }
 
 int main() {
@@ -38,21 +36,13 @@ int main() {
     cin >> num;
     while (num--) {
         cin >> n >> m;
-        for (int i = 0; i <= n + 1; i++) {  // bound wrapper
-            arr1[i] = INF;
-        }
-        for (int i = 0; i <= m + 1; i++) {  // bound wrapper
-            arr2[i] = INF;
-        }
         nm = n + m;
-
-        for (int i = 1; i <= n; i++) {
+        for (int i = 0; i < n; i++) {
             cin >> arr1[i];
         }
-        for (int i = 1; i <= m; i++) {
+        for (int i = 0; i < m; i++) {
             cin >> arr2[i];
         }
-
         solve();
     }
     return 0;
