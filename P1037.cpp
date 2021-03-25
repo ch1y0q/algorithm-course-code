@@ -14,6 +14,8 @@ vector<int> like[105];
 int matching[105]; /* 存储求解结果 */
 int check[105];
 
+// This is a bipartite graph matching problem
+// solve with DFS-based Hungarian algorithm
 bool dfs(int u) {
     for (auto i = like[u].begin(); i != like[u].end(); ++i) {
         int v = *i;
@@ -53,7 +55,8 @@ int main() {
             rep(j, 1, k) {
                 int t;
                 cin >> t;
-                like[i].push_back(t+n-1);
+                like[i].push_back(t + n - 1);
+                like[t + n - 1].push_back(i);
             }
         }
         cout << hungarian() << endl;
