@@ -2,40 +2,46 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#define rep(a, b, c) for (int a = b; a <= c; a++)
-#define per(a, b, c) for (int a = b; a >= c; a--)
+#define rep(a, b, c) for (us a = b; a <= c; a++)
+#define per(a, b, c) for (us a = b; a >= c; a--)
 #define MAXN 10005
 
 typedef long long ll;
+typedef unsigned short us;
 using namespace std;
 
-int n, w[MAXN], b[MAXN]; /* position of ith white/black */
-std::vector<std::pair<int, std::pair<int, int>>> distances;
-/* first: distances between ith white and jth black; second:<i, j> */
+struct point_pair {
+    us i, j;
+    us dis;
+    bool operator<(const point_pair& toCmp) { return dis < toCmp.dis; }
+};
+
+us n, w[MAXN], b[MAXN]; /* position of ith white/black */
+std::vector<point_pair> distances;
 bool visW[MAXN], visB[MAXN];
 
 void solve() {
     ll ans = 0;
     for (auto it : distances) {
-        if (!visW[it.second.first] && !visB[it.second.second]) {
-            ans += it.first;
-            visW[it.second.first] = visB[it.second.second] = true;
+        if (!visW[it.i] && !visB[it.j]) {
+            ans += it.dis;
+            visW[it.i] = visB[it.j] = true;
         }
     }
     cout << ans << endl;
 }
 
 int main() {
-    int m;
+    us m;
     cin >> m;
     while (m--) {
         distances.clear();
         rep(i, 1, n) { visB[i] = visW[i] = false; }
 
-        int white = 0, black = 0;
+        us white = 0, black = 0;
         cin >> n;
         rep(i, 1, 2 * n) {
-            int c;
+            bool c;
             cin >> c;
             if (c) {
                 b[++black] = i;
@@ -43,10 +49,11 @@ int main() {
                 w[++white] = i;
             }
         }
+        distances.reserve(n * n);
+        //cout<<"sizeof "<<sizeof(distances)<< endl;
         rep(i, 1, n) {
             rep(j, 1, n) {
-                distances.push_back(
-                    make_pair(abs(w[i] - b[j]), make_pair(i, j)));
+                distances.push_back(point_pair{i, j, (us)abs(w[i] - b[j])});
             }
         }
         sort(distances.begin(), distances.end());

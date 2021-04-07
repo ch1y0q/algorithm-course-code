@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <algorithm>
+#include <vector>
 #define rep(a,b,c) for (int a=b;a<=c;a++)
 #define per(a,b,c) for (int a=b;a>=c;a--)
 
