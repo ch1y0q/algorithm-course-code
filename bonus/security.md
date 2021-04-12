@@ -53,6 +53,9 @@ user_name=test' AND pwd LIKE '§1§%' #&password=xxx&login=Login
 ![image-20210310222718374](security.assets/image-20210310222718374.png)修改POST请求，`user_name=test' AND pwd LIKE '1§1§%' #&password=xxx&login=Login`，重复上述过程。
 逐位暴力破解，得完整密码`123456`。
 
+### 直接读取数据库
+利用文件任意读取漏洞，得到数据库的用户名和密码，可以在 http://47.99.179.148/phpmyadmin/ 直接访问数据库。
+
 ## 其他隐患
 为了不被开除，我没有进一步尝试，但不怀好意的人可能：
 * 上传Webshell，得到系统访问权
