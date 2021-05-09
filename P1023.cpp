@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cstring>
 #include <iostream>
 #include <set>
 #include <string>
@@ -16,22 +17,25 @@ int u, v, w;
 std::vector<std::pair<int, int>>
     arr[MAXN]; /* arr[u] = {<v1, w1>, <v2, w2>, ..,} */
 bool vis[MAXN];
-int dis[MAXN];
+int f[MAXN][MAXN];
 
-void Dijkstra() {
-    while (true) {
-        pair<int, int> p = make_pair(INF, -1); /* <dis[i], i> */
-        rep(j, 1, n) {
-            if (!vis[j]) p = std::min(p, make_pair(dis[j], j));
-        }
-        if (p.second == -1) { /* all visited, return */
-            return;
-        }
-        vis[p.second] = true;
-        for (auto it : arr[p.second]) {
-            dis[it.first] = std::min(dis[it.first], dis[p.second] + it.second);
-        }
+int dp(int i, int j) {  // go to i, money j left in pocket
+    if (f[i][j] >= 0) return f[i][j];
+    f[i][j] = INF;
+    if (j < pass[i]) return f[i][j];
+    if (i == s) {
+        f[i][j] = 0;
+        return 0;
     }
+    vis[i] = true;
+    for (auto &edge : arr[i]) {
+        if (vis[edge.first]) continue;
+        int tt = dp(edge.first, j - pass[i]);  // return INF if no money
+        tt = (tt == INF ? INF : tt + edge.second);
+        f[i][j] = min(f[i][j], tt);
+    }
+    vis[i] = 0;
+    return f[i][j];
 }
 
 int main() {
@@ -42,18 +46,18 @@ int main() {
         rep(i, 1, n) {
             arr[i].clear();
             vis[i] = false;
-            dis[i] = INF;
-            pass[i] = 0;
         }
+        memset(f, -1, sizeof(f));
         rep(i, 1, n) { cin >> pass[i]; }
+        pass[s] = 0;
         rep(i, 1, E) {
             cin >> u >> v >> w;
             arr[u].push_back(make_pair(v, w));  // u->v
             arr[v].push_back(make_pair(u, w));  // v->u
         }
-        dis[s] = 0;
-        Dijkstra();
-        cout << (dis[t] == INF ? -1 : dis[t]) << endl;
+
+        int ans = dp(t, M);
+        cout << (ans == INF ? -1 : ans) << endl;
     }
     return 0;
 }
