@@ -55,6 +55,10 @@ user_name=test' AND pwd LIKE '§1§%' #&password=xxx&login=Login
 
 ### 直接读取数据库
 利用文件任意读取漏洞，得到数据库的用户名和密码，可以在 http://47.99.179.148/phpmyadmin/ 直接访问数据库。
+例如，对`submit_table`表执行下列语句，可以查看各个user_id AC的题目数量。
+```sql
+SELECT `user_id`,COUNT(DISTINCT `problem_id`) FROM `submit_table` where `result`=3 GROUP BY user_id
+```
 
 ## 其他隐患
 为了不被开除，我没有进一步尝试，但不怀好意的人可能：
