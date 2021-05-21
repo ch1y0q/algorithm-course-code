@@ -20,16 +20,6 @@ int main() {
         rep(i, 1, N) { cin >> c[i]; }
         rep(i, 1, N) { cin >> y[i]; }
 
-        /* O(n^2) TLE
-                ll ans = 0;
-                rep(i, 1, N) {
-                    int p = INF;
-                    rep(j, 1, i) { p = std::min(p, c[j] + (i - j)); }
-                    ans += y[i] * p;
-                }
-                cout << ans << endl;
-        */
-
         ll ans = 0;
         rep(i, 1, N) {
             if (i > 1) c[i] = std::min(c[i], c[i - 1] + 1);
