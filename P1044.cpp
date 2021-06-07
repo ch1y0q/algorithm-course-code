@@ -1,3 +1,4 @@
+#define MAGIC 0.00491
 #include <algorithm>
 #include <iostream>
 #include <set>
@@ -119,7 +120,8 @@ int main() {
             arr[u].push_back({v, t0, alpha1, 0, 2 * i});
             arr[v].push_back({u, t0, alpha2, 0, 2 * i + 1});
 
-            map[u][v] = map[v][u] = t0;
+            map[u][v] = t0 + alpha1 / MAGIC;
+            map[v][u] = t0 + alpha2 / MAGIC;
             map_no[u][v] = 2 * i;
             map_no[v][u] = 2 * i + 1;
         }
