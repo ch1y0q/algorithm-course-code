@@ -1,4 +1,8 @@
 #define MAGIC 0.00491
+#define MAX_ITER 10
+#define ITERATION_COEFF 0.5
+#include <assert.h>
+
 #include <algorithm>
 #include <iostream>
 #include <set>
@@ -19,7 +23,7 @@ struct edge {
     int v;
     double t0;
     double alpha;
-    int fe;  // count of vehicles on the edge
+    // int fe;  // count of vehicles on the edge
     int no;  // number of edge
     bool operator<(const edge& in) {
         return (t0 == in.t0) ? (alpha < in.alpha) : (t0 < in.t0);
@@ -34,6 +38,10 @@ double dis[MAXM];        // Dijkstra and Floyd
 double map[MAXM][MAXM];  // Floyd
 int P[MAXM][MAXM];       // Floyd
 int map_no[MAXM][MAXM];  // Floyd; store edge #
+
+int fe[MAXE];
+double alpha[MAXM][MAXM];
+double t0[MAXM][MAXM];
 
 string ans_str;
 int ans_cnt;
@@ -71,6 +79,18 @@ void Path(int u, int v) {
     return;
 }
 
+void Path_dumb(int u, int v) {  // no stdout output, count flow for each edge
+    if (P[u][v] == -1) {
+        if (map_no[u][v] != -1) {
+            fe[map_no[u][v]]++;
+        }
+        return;
+    }
+    Path_dumb(u, P[u][v]);
+    Path_dumb(P[u][v], v);
+    return;
+}
+
 void Floyd() {
     rep(k, 0, m - 1) {
         rep(i, 0, m - 1) {
@@ -93,16 +113,20 @@ int main() {
 
         /* init */
         queries.clear();
+        /*
         rep(i, 0, m) {
             arr[i].clear();
             vis[i] = false;
             dis[i] = INF;
         }
+        */
         rep(i, 0, m) {
             rep(j, 0, m) {
                 map[i][j] = INF;
-                map_no[i][j] = -1;  // 0 is used as edge #
-                P[i][j] = -1;       // 0 is used as vertex #
+                map_no[i][j] = -1;  // edge # starting from 0
+                P[i][j] = -1;       // vertex # starting from 0
+                t0[i][j] = 0;
+                alpha[i][j] = alpha[j][i] = 0;
             }
         }
 
@@ -115,13 +139,16 @@ int main() {
 
         rep(i, 0, E - 1) {
             int u, v;
-            double t0, alpha1, alpha2;
-            cin >> u >> v >> t0 >> alpha1 >> alpha2;
-            arr[u].push_back({v, t0, alpha1, 0, 2 * i});
-            arr[v].push_back({u, t0, alpha2, 0, 2 * i + 1});
+            double t_0, alpha1, alpha2;
+            cin >> u >> v >> t_0 >> alpha1 >> alpha2;
+            // arr[u].push_back({v, t_0, alpha1, 2 * i});
+            // arr[v].push_back({u, t_0, alpha2, 2 * i + 1});
 
-            map[u][v] = t0 + alpha1 / MAGIC;
-            map[v][u] = t0 + alpha2 / MAGIC;
+            t0[u][v] = t0[v][u] = t_0;
+            map[u][v] = t_0 + alpha1 / MAGIC;
+            map[v][u] = t_0 + alpha2 / MAGIC;
+            alpha[u][v] = alpha1;
+            alpha[v][u] = alpha2;
             map_no[u][v] = 2 * i;
             map_no[v][u] = 2 * i + 1;
         }
@@ -131,7 +158,43 @@ int main() {
         // Dijkstra();
         // cout << (dis[t] == INF ? -1 : dis[t]) << endl;
         Floyd();
-        rep(i, 0, n - 1) {  // iterating queries
+        int iter = 0;
+        do {
+            iter++;
+            rep(i, 0, E) { fe[i] = 0; }
+            rep(i, 0, n - 1) {  // iterating queries
+                int s = queries[i].first;
+                int t = queries[i].second;
+
+                Path_dumb(s, t);  // get flow of each edge
+            }
+
+            /* modify map */
+            rep(i, 0, m - 1) {
+                rep(j, 0, m - 1) {
+                    if (map_no[i][j] != -1) {
+                        map[i][j] =
+                            t0[i][j] + t0[i][j] * (fe[map_no[i][j]] - 1) *
+                                           alpha[i][j] * ITERATION_COEFF;
+                    } else {
+                        map[i][j] = INF;
+                    }
+                }
+            }
+
+            /* get ready for next Floyd */
+            rep(i, 0, m) {
+                rep(j, 0, m) {
+                    P[i][j] = -1;  // 0 is used as vertex #
+                }
+            }
+            Floyd();
+
+            // cout << iter << "************" << endl;
+            // rep(i, 0, m - 1) {rep(j, 0, m - 1) cout << P[i][j] << " ";cout <<
+            // endl; } cout << endl << "*****************" << endl;
+        } while (iter < MAX_ITER);
+        rep(i, 0, n - 1) {  // iterating queries: last time
             int s = queries[i].first;
             int t = queries[i].second;
             ans_str = "";
