@@ -1,6 +1,6 @@
 #define MAGIC 0.00491
 #define MAX_ITER 10
-#define ITERATION_COEFF 0.003
+
 #include <assert.h>
 
 #include <algorithm>
@@ -17,7 +17,7 @@
 using namespace std;
 
 int n, E, s, t, m;
-int u, v, w;
+int u, v;
 
 struct edge {
     int v;
@@ -30,11 +30,8 @@ struct edge {
     }
 };
 
-std::vector<edge> arr[MAXM];               // adjacent list
 std::vector<std::pair<int, int>> queries;  // queries (s, t)
 
-bool vis[MAXM];          // Dijkstra
-double dis[MAXM];        // Dijkstra and Floyd
 double map[MAXM][MAXM];  // Floyd
 int P[MAXM][MAXM];       // Floyd
 int map_no[MAXM][MAXM];  // Floyd; store edge #
@@ -46,23 +43,9 @@ double t0[MAXM][MAXM];
 string ans_str;
 int ans_cnt;
 
-/*
-void Dijkstra() {
-    while (true) {
-        pair<double, int> p = make_pair(INF, -1); // <dis[i], i>
-        rep(j, 1, n) {
-            if (!vis[j]) p = std::min(p, make_pair(dis[j], j));
-        }
-        if (p.second == -1) { // all visited, return
-            return;
-        }
-        vis[p.second] = true;
-        for (auto it : arr[p.second]) {
-            dis[it.v] = std::min(dis[it.v], dis[p.second] + it.t0);
-        }
-    }
+inline double w(int u, int v) {
+    return t0[u][v] + 2 * t0[u][v] * alpha[u][v] * fe[map_no[u][v]];
 }
-*/
 
 void Path(int u, int v) {
     if (P[u][v] == -1) {
@@ -91,7 +74,7 @@ void Path_dumb(int u, int v) {  // no stdout output, count flow for each edge
     return;
 }
 
-void Floyd() {
+void Floyd_init() {
     rep(k, 0, m - 1) {
         rep(i, 0, m - 1) {
             rep(j, 0, m - 1) {
@@ -99,6 +82,28 @@ void Floyd() {
                     map[i][j] = map[i][k] + map[k][j];  // update shortest
                                                         // length
                     P[i][j] = k;  // record intermediate point
+                }
+            }
+        }
+    }
+}
+
+void Floyd() {
+    rep(k, 0, m - 1) {
+        rep(i, 0, m - 1) {
+            rep(j, 0, m - 1) {
+                if (map_no[i][k] < 0 || map_no[k][j] < 0) continue;
+                assert(map[i][j] != INF);
+                int w_ = w(i, k) + w(k, j);
+                if (w_ < map[i][j]) {  // relax
+                    map[i][j] = w_;    // update shortest
+                                       // length
+                    P[i][j] = k;       // record intermediate point
+                    P[i][k] = -1;
+                    P[k][j] = -1;
+                    fe[map_no[i][k]]++;
+                    fe[map_no[k][j]]++;
+                    fe[map_no[i][j]]--;
                 }
             }
         }
@@ -113,13 +118,6 @@ int main() {
 
         /* init */
         queries.clear();
-        /*
-        rep(i, 0, m) {
-            arr[i].clear();
-            vis[i] = false;
-            dis[i] = INF;
-        }
-        */
         rep(i, 0, m) {
             rep(j, 0, m) {
                 map[i][j] = INF;
@@ -141,8 +139,6 @@ int main() {
             int u, v;
             double t_0, alpha1, alpha2;
             cin >> u >> v >> t_0 >> alpha1 >> alpha2;
-            // arr[u].push_back({v, t_0, alpha1, 2 * i});
-            // arr[v].push_back({u, t_0, alpha2, 2 * i + 1});
 
             t0[u][v] = t0[v][u] = t_0;
             map[u][v] = t_0 + alpha1 / MAGIC;
@@ -154,45 +150,24 @@ int main() {
         }
 
         /* solver */
-        // dis[s] = 0;
-        // Dijkstra();
-        // cout << (dis[t] == INF ? -1 : dis[t]) << endl;
-        Floyd();
+        // init
+        rep(i, 0, E) { fe[i] = 0; }
+        rep(i, 0, m) {
+            rep(j, 0, m) {
+                P[i][j] = -1;  // 0 is used as vertex #
+            }
+        }
+        Floyd_init();
+        rep(i, 0, n - 1) {  // iterating queries: last time
+            int s = queries[i].first;
+            int t = queries[i].second;
+            Path_dumb(s, t);
+        }
+
         int iter = 0;
         do {
             iter++;
-            rep(i, 0, E) { fe[i] = 0; }
-            rep(i, 0, n - 1) {  // iterating queries
-                int s = queries[i].first;
-                int t = queries[i].second;
-
-                Path_dumb(s, t);  // get flow of each edge
-            }
-
-            /* modify map */
-            rep(i, 0, m - 1) {
-                rep(j, 0, m - 1) {
-                    if (map_no[i][j] != -1) {
-                        map[i][j] =
-                            t0[i][j] + t0[i][j] * max(0, fe[map_no[i][j]] - 1) *
-                                           alpha[i][j] * ITERATION_COEFF / iter;
-                    } else {
-                        map[i][j] = INF;
-                    }
-                }
-            }
-
-            /* get ready for next Floyd */
-            rep(i, 0, m) {
-                rep(j, 0, m) {
-                    P[i][j] = -1;  // 0 is used as vertex #
-                }
-            }
             Floyd();
-
-            // cout << iter << "************" << endl;
-            // rep(i, 0, m - 1) {rep(j, 0, m - 1) cout << P[i][j] << " ";cout <<
-            // endl; } cout << endl << "*****************" << endl;
         } while (iter < MAX_ITER);
         rep(i, 0, n - 1) {  // iterating queries: last time
             int s = queries[i].first;
