@@ -1,6 +1,6 @@
 #define MAGIC 0.00491
 #define MAX_ITER 10
-#define ITERATION_COEFF 0.5
+#define ITERATION_COEFF 0.003
 #include <assert.h>
 
 #include <algorithm>
@@ -174,8 +174,8 @@ int main() {
                 rep(j, 0, m - 1) {
                     if (map_no[i][j] != -1) {
                         map[i][j] =
-                            t0[i][j] + t0[i][j] * (fe[map_no[i][j]] - 1) *
-                                           alpha[i][j] * ITERATION_COEFF;
+                            t0[i][j] + t0[i][j] * max(0, fe[map_no[i][j]] - 1) *
+                                           alpha[i][j] * ITERATION_COEFF / iter;
                     } else {
                         map[i][j] = INF;
                     }
