@@ -1,4 +1,4 @@
-#define MAGIC 0.00491
+const double MAGIC[] = { 0, 0.0050, 0.0048, 0.00493, 0.00491, 0.0055 };
 #define MAX_ITER 10
 
 #include <assert.h>
@@ -123,7 +123,7 @@ void Floyd() {
 int main() {
     int T;
     cin >> T;
-    while (T--) {
+    rep (_,1,T) {
         cin >> m >> E >> n;  // m: nodes; E: edges; n: queries
 
         /* init */
@@ -151,8 +151,8 @@ int main() {
             cin >> u >> v >> t_0 >> alpha1 >> alpha2;
 
             t0[u][v] = t0[v][u] = t_0;
-            map[u][v] = t_0 + alpha1 / MAGIC;
-            map[v][u] = t_0 + alpha2 / MAGIC;
+            map[u][v] = t_0 + alpha1 / MAGIC[_];
+            map[v][u] = t_0 + alpha2 / MAGIC[_];
             alpha[u][v] = alpha1;
             alpha[v][u] = alpha2;
             map_no[u][v] = 2 * i;
