@@ -43,8 +43,18 @@ double t0[MAXM][MAXM];
 string ans_str;
 int ans_cnt;
 
+/*--------------
+Relaxation: 1-2 -> 1-3-2
+delta Sum T=w(1,3)+w(3,2)-ww(1,2)
+--------------*/
+
 inline double w(int u, int v) {
     return t0[u][v] + 2 * t0[u][v] * alpha[u][v] * fe[map_no[u][v]];
+}
+
+inline double ww(int u, int v) {
+    assert(fe[map_no[u][v]] - 1>=0);
+    return t0[u][v] * (1 + 2 * alpha[u][v] * (fe[map_no[u][v]] - 1));
 }
 
 void Path(int u, int v) {
@@ -95,10 +105,10 @@ void Floyd() {
                 if (map_no[i][k] < 0 || map_no[k][j] < 0) continue;
                 assert(map[i][j] != INF);
                 int w_ = w(i, k) + w(k, j);
-                if (w_ < map[i][j]) {  // relax
-                    map[i][j] = w_;    // update shortest
-                                       // length
-                    P[i][j] = k;       // record intermediate point
+                if (w_ < ww(i, j)) {  // relax
+                    map[i][j] = w_;   // update shortest
+                                      // length
+                    P[i][j] = k;      // record intermediate point
                     P[i][k] = -1;
                     P[k][j] = -1;
                     fe[map_no[i][k]]++;
