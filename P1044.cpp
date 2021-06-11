@@ -1,5 +1,5 @@
-const double MAGIC[] = { 0, 0.0050, 0.0048, 0.00493, 0.00491, 0.0055 };
-#define MAX_ITER 10
+#pragma GCC optimize(2)
+#pragma GCC optimize(3, "Ofast", "inline")
 
 #include <assert.h>
 
@@ -10,189 +10,169 @@ const double MAGIC[] = { 0, 0.0050, 0.0048, 0.00493, 0.00491, 0.0055 };
 #include <vector>
 #define rep(a, b, c) for (int a = b; a <= c; a++)
 #define per(a, b, c) for (int a = b; a >= c; a--)
+#define INF 1e7
 #define MAXM 405
 #define MAXE 10005
 #define MAXN 8005
-#define INF 1e7
+#define MAGIC 0.00491
+
 using namespace std;
 
-int n, E, s, t, m;
-int u, v;
+bool unused[MAXN];
+double len[MAXN];
+int O[MAXN];
+int D[MAXN];
+int order[MAXN];
+int T, m, E, n;
+vector<double> path[MAXN];
 
-struct edge {
-    int v;
-    double t0;
-    double alpha;
-    // int fe;  // count of vehicles on the edge
-    int no;  // number of edge
-    bool operator<(const edge& in) {
-        return (t0 == in.t0) ? (alpha < in.alpha) : (t0 < in.t0);
-    }
+struct Edge
+{
+	Edge(int _u, int _v, double _w, double _t, double _alpha, int _index)
+	{
+		next = nullptr;
+		t_0 = _t;
+		alpha = _alpha;
+		u = _u;
+		v = _v;
+		index = _index;
+		weight = _w;
+	}
+
+	int index;
+	double t_0;
+	double alpha;
+	int u;
+	int v;
+	double weight;
+	Edge* next;
 };
 
-std::vector<std::pair<int, int>> queries;  // queries (s, t)
-
-double map[MAXM][MAXM];  // Floyd
-int P[MAXM][MAXM];       // Floyd
-int map_no[MAXM][MAXM];  // Floyd; store edge #
-
-int fe[MAXE];
-double alpha[MAXM][MAXM];
-double t0[MAXM][MAXM];
-
-string ans_str;
-int ans_cnt;
-
-/*--------------
-Relaxation: 1-2 -> 1-3-2
-delta Sum T=w(1,3)+w(3,2)-ww(1,2)
---------------*/
-
-inline double w(int u, int v) {
-    return t0[u][v] + 2 * t0[u][v] * alpha[u][v] * fe[map_no[u][v]];
+bool order_cmp(int x, int y) {
+	return (O[x] < O[y]);
 }
 
-inline double ww(int u, int v) {
-    assert(fe[map_no[u][v]] - 1>=0);
-    return t0[u][v] * (1 + 2 * alpha[u][v] * (fe[map_no[u][v]] - 1));
+double Dijkstra(int u, int v, int qid, vector<Edge*> a, vector<Edge*> E)
+{
+	int t = v;
+	vector<Edge*> p (m);
+	for (int i = 0; i < m; i++)
+	{
+		p[i] = NULL;
+		if (i == u){
+			unused[i] = 0;
+			len[i] = 0;
+		}
+		else{
+			unused[i] = 1;
+			len[i] = INF;
+		}
+	}
+
+	Edge* tmp = a[u];
+	int memo = u;
+	while (unused[t] && t < m)
+	{
+		while (tmp)
+		{
+			tmp = tmp->next;
+			if (tmp && unused[tmp->v])
+			{
+				double temp = len[memo] + tmp->weight;
+				if (temp < len[tmp->v])
+				{
+					len[tmp->v] = temp;
+					p[tmp->v] = tmp;
+				}
+			}
+		}
+		/* find edge with least len */
+		double x = INF;
+		int y = 0;
+		for (int i = 0; i < m; i++)
+		{
+			if (unused[i])
+			{
+				if (len[i] <= x)
+				{
+					x = len[i];
+					y = i;
+				}
+			}
+		}
+		tmp = a[y];
+		memo = y;
+		unused[y] = 0;
+	}
+	double an = len[t];
+
+	while (p[t] && t < m)
+	{
+		if (path[qid].empty())
+		{
+			path[qid].push_back(p[t]->v);
+			path[qid].push_back(p[t]->index);
+			path[qid].push_back(p[t]->u);
+		}
+		else
+		{
+			path[qid].push_back(p[t]->index);
+			path[qid].push_back(p[t]->u);
+		}
+		p[t] -> weight += (p[t]->t_0) * p[t]->alpha;  //update edge weight
+		t = p[t]->u;
+	}
 }
 
-void Path(int u, int v) {
-    if (P[u][v] == -1) {
-        if (map_no[u][v] != -1) {
-            ans_str = ans_str + to_string(map_no[u][v]) + ' ';
-            ans_cnt++;
-        }
-        return;
-    }
-    Path(u, P[u][v]);
-    ans_str += (to_string(P[u][v]) + ' ');
-    ans_cnt++;
-    Path(P[u][v], v);
-    return;
-}
+int main()
+{
+	cin >> T;
+	while (T--)
+	{
+		cin >> m >> E >> n;	// #nodes, #edges, #queries
 
-void Path_dumb(int u, int v) {  // no stdout output, count flow for each edge
-    if (P[u][v] == -1) {
-        if (map_no[u][v] != -1) {
-            fe[map_no[u][v]]++;
-        }
-        return;
-    }
-    Path_dumb(u, P[u][v]);
-    Path_dumb(P[u][v], v);
-    return;
-}
+		/* init variables */
+		vector<Edge*> a(m);
+		vector<Edge*> edges(2 * E);
+		rep(i, 0, n - 1) { path[i].clear(); }
+		rep(i, 0, m - 1) { a[i] = new Edge(i, 0, 0, 0, 0, -1); }
 
-void Floyd_init() {
-    rep(k, 0, m - 1) {
-        rep(i, 0, m - 1) {
-            rep(j, 0, m - 1) {
-                if (map[i][k] + map[k][j] < map[i][j]) {
-                    map[i][j] = map[i][k] + map[k][j];  // update shortest
-                                                        // length
-                    P[i][j] = k;  // record intermediate point
-                }
-            }
-        }
-    }
-}
+		rep(i, 0, n - 1) { cin >> O[i] >> D[i]; }
 
-void Floyd() {
-    rep(k, 0, m - 1) {
-        rep(i, 0, m - 1) {
-            rep(j, 0, m - 1) {
-                if (map_no[i][k] < 0 || map_no[k][j] < 0) continue;
-                assert(map[i][j] != INF);
-                int w_ = w(i, k) + w(k, j);
-                if (w_ < ww(i, j)) {  // relax
-                    map[i][j] = w_;   // update shortest
-                                      // length
-                    P[i][j] = k;      // record intermediate point
-                    P[i][k] = -1;
-                    P[k][j] = -1;
-                    fe[map_no[i][k]]++;
-                    fe[map_no[k][j]]++;
-                    fe[map_no[i][j]]--;
-                }
-            }
-        }
-    }
-}
+		rep(i, 0, E - 1)
+		{
+			int u, v;
+			double t0, al1, al2;
+			cin >> u >> v >> t0 >> al1 >> al2;
+			double w1 = t0 * (1 + al1);
+			double w2 = t0 * (1 + al2);
+			edges[2 * i] = new Edge(u, v, w1, t0, al1, 2 * i);
+			edges[2 * i + 1] = new Edge(v, u, w1, t0, al2, 2 * i + 1);
+			auto* tmp = a[u];
+			while (tmp->next) {
+				tmp = tmp->next;
+			}
+			tmp->next = edges[2 * i];
+			tmp = a[v];
+			while (tmp->next) {
+				tmp = tmp->next;
+			}
+			tmp->next = edges[2 * i + 1];
+		}
 
-int main() {
-    int T;
-    cin >> T;
-    rep (_,1,T) {
-        cin >> m >> E >> n;  // m: nodes; E: edges; n: queries
+		rep(i, 0, n - 1)order[i] = i;
+		//sort(order, order + n, order_cmp);
+		random_shuffle(order, order + n);
 
-        /* init */
-        queries.clear();
-        rep(i, 0, m) {
-            rep(j, 0, m) {
-                map[i][j] = INF;
-                map_no[i][j] = -1;  // edge # starting from 0
-                P[i][j] = -1;       // vertex # starting from 0
-                t0[i][j] = 0;
-                alpha[i][j] = alpha[j][i] = 0;
-            }
-        }
-
-        /* read in */
-        rep(i, 1, n) {
-            int s, t;
-            cin >> s >> t;
-            queries.push_back(make_pair(s, t));
-        }
-
-        rep(i, 0, E - 1) {
-            int u, v;
-            double t_0, alpha1, alpha2;
-            cin >> u >> v >> t_0 >> alpha1 >> alpha2;
-
-            t0[u][v] = t0[v][u] = t_0;
-            map[u][v] = t_0 + alpha1 / MAGIC[_];
-            map[v][u] = t_0 + alpha2 / MAGIC[_];
-            alpha[u][v] = alpha1;
-            alpha[v][u] = alpha2;
-            map_no[u][v] = 2 * i;
-            map_no[v][u] = 2 * i + 1;
-        }
-
-        /* solver */
-        // init
-        rep(i, 0, E) { fe[i] = 0; }
-        rep(i, 0, m) {
-            rep(j, 0, m) {
-                P[i][j] = -1;  // 0 is used as vertex #
-            }
-        }
-        Floyd_init();
-        rep(i, 0, n - 1) {  // iterating queries: last time
-            int s = queries[i].first;
-            int t = queries[i].second;
-            Path_dumb(s, t);
-        }
-
-        int iter = 0;
-        do {
-            iter++;
-            Floyd();
-        } while (iter < MAX_ITER);
-        rep(i, 0, n - 1) {  // iterating queries: last time
-            int s = queries[i].first;
-            int t = queries[i].second;
-            ans_str = "";
-            ans_cnt = 0;
-            ans_str = to_string(s) + " ";
-            ans_cnt++;
-            Path(s, t);
-            ans_str += to_string(t);
-            ans_cnt++;
-
-            cout << ans_cnt << endl;
-            cout << ans_str << endl;
-        }
-    }
-    return 0;
+		rep(i, 0, n - 1) {
+			Dijkstra(O[order[i]], D[order[i]], order[i], a, edges);
+		}
+		rep(i, 0, n - 1) {
+			cout << path[i].size() << endl;
+			for (auto _ = path[i].crbegin(); _ != path[i].crend(); ++_)cout << *_ << " ";;
+			cout << endl;
+			path[i].clear();
+		}
+	}
+	return 0;
 }
