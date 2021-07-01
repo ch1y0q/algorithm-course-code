@@ -48,6 +48,7 @@ void lds() {  // longest decreasing(non-increasing) subsequence
         maxx = std::max(maxx, f[i]);
     }
     cout << maxx << ' ';
+    delete[] f;
     return;
 }
 
@@ -61,6 +62,7 @@ int main() {
         }
         lds();
         how_many();
+        delete[] arr;
     }
     return 0;
 }

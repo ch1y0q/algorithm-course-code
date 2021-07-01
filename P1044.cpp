@@ -61,8 +61,9 @@
 #define MAXN 8005
 #define MAGIC 0.00491
 #define RPROB 7
-#define MAX_ITER 12
-#define FACTOR 0.1
+#define RPROB_FIRST 3
+#define MAX_ITER 26
+#define FACTOR 0.03
 
 using namespace std;
 
@@ -104,7 +105,10 @@ vector<Edge*> edges(2 * MAXE, nullptr);
 
 inline bool order_cmp(int x, int y) { return (O[x] < O[y]); }
 
-inline bool w_cmp(int x, int y) { return (tot_cost[O[x]] > tot_cost[O[y]]); }
+inline bool w_cmp(int x, int y) {
+    //return (tot_cost[x] / path[x].size() > tot_cost[y] / path[y].size());
+    return (tot_cost[x] > tot_cost[y]);
+}
 
 void Dijkstra(int u, int v, int qid, vector<Edge*>& adj) {
     int t = v;
@@ -150,8 +154,8 @@ void Dijkstra(int u, int v, int qid, vector<Edge*>& adj) {
         path[qid].push_back(p[t]->index);
         path[qid].push_back(p[t]->u);
 
-        tot_cost[qid] *=
-            p[t]->weight / p[t]->t_0;  // update tot_cost of the query
+        //tot_cost[qid] += (p[t]->weight - p[t]->t_0);  // update tot_cost of the query
+        tot_cost[qid] = std::max(tot_cost[qid], p[t]->weight - p[t]->t_0);
         p[t]->weight += (p[t]->t_0) * p[t]->alpha;  // update edge weight
         t = p[t]->u;
     }
@@ -206,7 +210,9 @@ int main() {
             std::partial_sort(order, order + (int)ceil(n * FACTOR), order + n,
                               w_cmp);
             // sort(order, order + n, w_cmp);
+
             rep(i, 0, n * FACTOR) {
+                if (rand() % RPROB_FIRST) continue;
                 tot_cost[i] = 0;
                 for (auto it = path[order[i]].begin() + 1;
                      it < path[order[i]].end(); it += 2) {
@@ -218,7 +224,7 @@ int main() {
                 Dijkstra(O[order[i]], D[order[i]], order[i], adj);
             }
 
-            rep(i, 0, n - 1) {
+            rep(i, n * FACTOR, n - 1) {
                 if (rand() % RPROB) continue;
                 tot_cost[i] = 0;
                 for (auto it = path[order[i]].begin() + 1;
