@@ -8,7 +8,7 @@ import time
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--PHPSESSID", type=str,
-                        default='nsvu4ufvhkfjv56r3h1jj786h4')
+                        default='')
     parser.add_argument("--dir", type=str, default=".")
     return parser.parse_args()
 

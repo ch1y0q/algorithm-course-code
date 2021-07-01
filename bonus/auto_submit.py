@@ -8,7 +8,7 @@ from rich.progress import track
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--PHPSESSID", type=str,
-                        default='3is46un7amsftvguicchapbu5o')
+                        default='')
     parser.add_argument("--dir", type=str, default=".")
     return parser.parse_args()
 
